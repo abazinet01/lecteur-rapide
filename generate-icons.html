@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        canvas { border: 1px solid #333; margin: 10px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .icons { display: flex; gap: 20px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <h1>Speed Reader - Icon Generator</h1>
+    <p>Click the buttons to download the icons, then place them in the icons/ folder.</p>
+
+    <div class="icons">
+        <div>
+            <canvas id="icon192" width="192" height="192"></canvas>
+            <br>
+            <button onclick="downloadIcon(192)">Download 192x192</button>
+        </div>
+        <div>
+            <canvas id="icon512" width="512" height="512"></canvas>
+            <br>
+            <button onclick="downloadIcon(512)">Download 512x512</button>
+        </div>
+    </div>
+
+    <script>
+        function drawIcon(canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const scale = size / 192;
+
+            // Background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, size);
+
+            // Rounded rectangle background
+            const padding = 20 * scale;
+            const radius = 30 * scale;
+            ctx.fillStyle = '#1a1a1a';
+            roundRect(ctx, padding, padding, size - padding * 2, size - padding * 2, radius);
+            ctx.fill();
+
+            // Draw "SR" letters with ORP styling
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // S letter (with first letter red - ORP style)
+            const fontSize = 70 * scale;
+            ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;
+
+            // Draw S in red (ORP letter)
+            ctx.fillStyle = '#ff3b30';
+            ctx.fillText('S', size * 0.35, size * 0.5);
+
+            // Draw R in white
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('R', size * 0.65, size * 0.5);
+
+            // Small line indicator at center (ORP marker)
+            ctx.strokeStyle = '#ff3b30';
+            ctx.lineWidth = 2 * scale;
+            ctx.beginPath();
+            ctx.moveTo(size / 2, size * 0.7);
+            ctx.lineTo(size / 2, size * 0.8);
+            ctx.stroke();
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function downloadIcon(size) {
+            const canvas = document.getElementById('icon' + size);
+            const link = document.createElement('a');
+            link.download = 'icon-' + size + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Draw icons on load
+        window.onload = function() {
+            drawIcon(document.getElementById('icon192'));
+            drawIcon(document.getElementById('icon512'));
+        };
+    </script>
+</body>
+</html>

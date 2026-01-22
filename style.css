@@ -1,0 +1,347 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --orp-color: #ff3b30;
+    --accent-color: #007aff;
+    --secondary-color: #333333;
+    --border-color: #444444;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Vues */
+.view {
+    display: none;
+    height: 100%;
+    width: 100%;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.view.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Vue d'entrée */
+#input-view {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+h1 {
+    font-size: 2rem;
+    text-align: center;
+    font-weight: 700;
+}
+
+.subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: -10px;
+}
+
+textarea {
+    width: 100%;
+    height: 200px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    font-size: 16px;
+    resize: none;
+    font-family: inherit;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+textarea::placeholder {
+    color: #666;
+}
+
+.file-upload {
+    text-align: center;
+}
+
+.btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: white;
+    width: 100%;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    display: inline-block;
+}
+
+.settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settings span {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--secondary-color);
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    cursor: pointer;
+}
+
+/* Vue de lecture */
+#reading-view {
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    padding-top: calc(20px + env(safe-area-inset-top));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+.reading-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #666;
+    padding: 0 10px;
+}
+
+.word-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    min-height: 150px;
+}
+
+
+.word {
+    font-size: clamp(2rem, 10vw, 4rem);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: opacity 0.05s;
+}
+
+.word .orp {
+    color: var(--orp-color);
+}
+
+.progress-container {
+    position: relative;
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+
+.progress-bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 4px;
+    background-color: var(--accent-color);
+    border-radius: 2px;
+    width: 0%;
+    pointer-events: none;
+    transition: width 0.1s;
+}
+
+.progress-slider {
+    position: absolute;
+    width: 100%;
+    height: 30px;
+    background: transparent;
+    -webkit-appearance: none;
+}
+
+.progress-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--secondary-color);
+    border-radius: 2px;
+}
+
+.progress-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    margin-top: -6px;
+    cursor: pointer;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px 0;
+}
+
+.control-btn {
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.1s, background-color 0.2s;
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.play-btn {
+    width: 80px;
+    height: 80px;
+    background-color: var(--accent-color);
+    font-size: 2rem;
+}
+
+.speed-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.speed-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.speed-btn:active {
+    transform: scale(0.95);
+}
+
+#speed-display {
+    font-size: 1rem;
+    color: #888;
+    min-width: 100px;
+    text-align: center;
+}
+
+.exit-btn {
+    margin-top: 20px;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+}
+
+/* Animation de fade pour les mots */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.word.animate {
+    animation: fadeIn 0.05s ease-out;
+}
+
+/* Mode pause */
+.paused .word {
+    opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-height: 600px) {
+    .word {
+        font-size: clamp(1.5rem, 8vw, 3rem);
+    }
+    
+    .controls {
+        padding: 10px 0;
+    }
+    
+    .control-btn {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .play-btn {
+        width: 70px;
+        height: 70px;
+    }
+}
