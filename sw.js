@@ -1,74 +1,78 @@
-const CACHE_NAME = 'speed-reader-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/app.js',
-    '/manifest.json',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png'
+/*
+ * Les chemins sont relatifs à l'emplacement de ce fichier : l'application est
+ * servie depuis un sous-dossier (/lecteur-rapide/) sur GitHub Pages, où des
+ * chemins absolus comme « /index.html » pointeraient à côté.
+ */
+const CACHE_NAME = 'lecteur-rapide-v2';
+const ASSETS = [
+    './',
+    './index.html',
+    './style.css',
+    './app.js',
+    './epub.js',
+    './manifest.json',
+    './icons/icon-192.png',
+    './icons/icon-512.png'
 ];
 
-// Install event - cache files
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-            .catch((err) => {
-                console.log('Cache install failed:', err);
-            })
+            .then((cache) => cache.addAll(ASSETS))
+            .then(() => self.skipWaiting())
     );
-    // Activate immediately
-    self.skipWaiting();
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+        caches.keys()
+            .then((names) => Promise.all(
+                names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
+            ))
+            .then(() => self.clients.claim())
     );
-    // Take control immediately
-    self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+/*
+ * On sert le cache tout de suite et on rafraîchit en arrière-plan : hors ligne
+ * l'application démarre, en ligne la version suivante est déjà prête.
+ */
 self.addEventListener('fetch', (event) => {
+    const request = event.request;
+    if (request.method !== 'GET') return;
+
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) return;
+
+    /*
+     * Le partage arrive en « ?text=… » : chaque article partagé produirait
+     * sinon une entrée de cache distincte pour la même page. On sert la page
+     * sans tenir compte de la requête, et on ne la remet pas en cache.
+     */
+    const cacheable = url.search === '';
+
     event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Return cached version or fetch from network
-                if (response) {
-                    return response;
+        caches.open(CACHE_NAME).then(async (cache) => {
+            const cached = await cache.match(request, { ignoreSearch: true });
+
+            const network = fetch(request).then((response) => {
+                if (cacheable && response && response.ok && response.type === 'basic') {
+                    cache.put(request, response.clone());
                 }
-                return fetch(event.request).then((response) => {
-                    // Don't cache non-successful responses
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
-                        return response;
-                    }
-                    // Clone and cache the response
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
-                    return response;
-                });
-            })
-            .catch(() => {
-                // Offline fallback could go here
-                console.log('Fetch failed, offline');
-            })
+                return response;
+            }).catch(() => null);
+
+            if (cached) return cached;
+
+            const fresh = await network;
+            if (fresh) return fresh;
+
+            // Hors ligne sur une adresse inconnue : on retombe sur la page d'accueil.
+            if (request.mode === 'navigate') {
+                const fallback = await cache.match('./index.html');
+                if (fallback) return fallback;
+            }
+            return Response.error();
+        })
     );
 });

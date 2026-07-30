@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="auto">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Speed Reader</title>
+    <meta name="description" content="Lecteur rapide (RSVP) avec point de fixation optimal, pensé pour le français. Fonctionne hors ligne.">
+    <title>Lecteur rapide</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="stylesheet" href="style.css">
@@ -15,60 +16,123 @@
     <!-- Vue d'entrée du texte -->
     <div id="input-view" class="view active">
         <div class="container">
-            <h1>Speed Reader</h1>
-            <p class="subtitle">Lecture rapide avec point de fixation optimal</p>
-            
-            <textarea id="text-input" placeholder="Collez votre texte ici..."></textarea>
-            
-            <div class="file-upload">
-                <label for="file-input" class="btn btn-secondary">
-                    📁 Importer un fichier .txt
-                </label>
-                <input type="file" id="file-input" accept=".txt" hidden>
+            <header class="head">
+                <h1>Lecteur rapide</h1>
+                <p class="subtitle">Un mot à la fois, l'œil immobile. Pour arrêter la vocalisation.</p>
+            </header>
+
+            <section id="library-section" class="library" hidden aria-labelledby="library-title">
+                <h2 id="library-title">Lectures en cours</h2>
+                <ul id="library-list" class="library-list"></ul>
+            </section>
+
+            <label for="text-input" class="sr-only">Texte à lire</label>
+            <textarea id="text-input" placeholder="Collez votre texte ici…"></textarea>
+
+            <div class="input-actions">
+                <button type="button" id="paste-btn" class="btn btn-secondary" hidden>Coller</button>
+                <label for="file-input" class="btn btn-secondary">Importer un fichier</label>
+                <input type="file" id="file-input" accept=".txt,.md,.markdown,.epub,text/plain,text/markdown,application/epub+zip" hidden>
             </div>
-            
-            <button id="start-btn" class="btn btn-primary">Commencer la lecture</button>
-            
-            <div class="settings">
-                <label>
-                    <span>Vitesse: <span id="wpm-display">300</span> WPM</span>
-                    <input type="range" id="wpm-slider" min="100" max="800" value="300" step="25">
-                </label>
-            </div>
+            <p id="import-status" class="import-status" role="status" aria-live="polite"></p>
+
+            <button type="button" id="start-btn" class="btn btn-primary">Commencer la lecture</button>
+
+            <details id="settings-panel" class="settings">
+                <summary>Réglages</summary>
+
+                <div class="setting">
+                    <label for="wpm-slider">Vitesse : <output id="wpm-display">300</output> mots/min</label>
+                    <input type="range" id="wpm-slider" min="100" max="1000" value="300" step="25">
+                </div>
+
+                <div class="setting">
+                    <label for="chunk-select">Mots par groupe</label>
+                    <select id="chunk-select">
+                        <option value="1">1 — lecture classique</option>
+                        <option value="2">2 — casse mieux la vocalisation</option>
+                        <option value="3">3 — pour les lecteurs rapides</option>
+                    </select>
+                </div>
+
+                <div class="setting">
+                    <label for="size-slider">Taille du texte : <output id="size-display">100</output> %</label>
+                    <input type="range" id="size-slider" min="50" max="180" value="100" step="10">
+                </div>
+
+                <div class="setting">
+                    <label for="theme-select">Thème</label>
+                    <select id="theme-select">
+                        <option value="auto">Automatique</option>
+                        <option value="sombre">Sombre</option>
+                        <option value="clair">Clair</option>
+                    </select>
+                </div>
+
+                <div class="setting">
+                    <label for="orp-color">Couleur du point de fixation</label>
+                    <input type="color" id="orp-color" value="#ff3b30">
+                </div>
+
+                <div class="setting setting-check">
+                    <input type="checkbox" id="pacing-check" checked>
+                    <label for="pacing-check">Rythme naturel <span class="hint">(pauses aux virgules et aux points, mots longs affichés plus longtemps)</span></label>
+                </div>
+
+                <div class="setting setting-check">
+                    <input type="checkbox" id="guides-check" checked>
+                    <label for="guides-check">Repères de fixation <span class="hint">(traits au-dessus et sous la lettre colorée)</span></label>
+                </div>
+
+                <div class="setting setting-check">
+                    <input type="checkbox" id="wake-check" checked>
+                    <label for="wake-check">Garder l'écran allumé pendant la lecture</label>
+                </div>
+            </details>
         </div>
     </div>
 
     <!-- Vue de lecture -->
     <div id="reading-view" class="view">
         <div class="reading-header">
-            <span id="current-wpm">300 WPM</span>
+            <span id="current-wpm">300 mots/min</span>
+            <span id="time-left"></span>
             <span id="word-counter">0 / 0</span>
         </div>
-        
+
         <div class="word-container" id="word-container">
-            <div id="word-display" class="word"></div>
+            <div id="word-display" class="word" aria-hidden="true"></div>
         </div>
-        
+
         <div class="progress-container">
             <div id="progress-bar" class="progress-bar"></div>
+            <label for="progress-slider" class="sr-only">Position dans le texte</label>
             <input type="range" id="progress-slider" min="0" max="100" value="0" class="progress-slider">
         </div>
-        
+
         <div class="controls">
-            <button id="back-btn" class="control-btn" title="Reculer">⏮</button>
-            <button id="play-pause-btn" class="control-btn play-btn" title="Play/Pause">▶</button>
-            <button id="forward-btn" class="control-btn" title="Avancer">⏭</button>
+            <button type="button" id="back-btn" class="control-btn" aria-label="Reculer d'un mot">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 8 12l10 6zM6 6h2v12H6z"/></svg>
+            </button>
+            <button type="button" id="play-pause-btn" class="control-btn play-btn" aria-label="Lecture">
+                <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>
+                <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+            </button>
+            <button type="button" id="forward-btn" class="control-btn" aria-label="Avancer d'un mot">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l10 6-10 6zM16 6h2v12h-2z"/></svg>
+            </button>
         </div>
-        
+
         <div class="speed-controls">
-            <button id="slower-btn" class="speed-btn">−</button>
-            <span id="speed-display">300 WPM</span>
-            <button id="faster-btn" class="speed-btn">+</button>
+            <button type="button" id="slower-btn" class="speed-btn" aria-label="Ralentir de 25 mots par minute">−</button>
+            <span id="speed-display" role="status" aria-live="polite">300 mots/min</span>
+            <button type="button" id="faster-btn" class="speed-btn" aria-label="Accélérer de 25 mots par minute">+</button>
         </div>
-        
-        <button id="exit-btn" class="btn btn-secondary exit-btn">✕ Quitter</button>
+
+        <button type="button" id="exit-btn" class="btn btn-secondary exit-btn">Quitter</button>
     </div>
 
+    <script src="epub.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
